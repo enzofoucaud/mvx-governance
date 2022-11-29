@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// BLAST_API is the URL of the BLAST API
 const EXPLORER_API = "https://api.elrond.com"
 
 type Governance struct {
@@ -57,7 +56,6 @@ func main() {
 		}
 	}
 
-	// Write CSV
 	writeCSV(governance)
 
 	fmt.Println("Done")
@@ -94,19 +92,16 @@ func getPower(decoded string) string {
 }
 
 func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {
-	//Encode the data
 	var (
 		url = EXPLORER_API + "/accounts/" + erd + "/transactions?from=" + from + "&size=50&withScResults=true"
 	)
 
-	// Create a new request using http
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Err(err).Msg("Error when client create GET request to " + url)
 		return []Transactions{}, err
 	}
 
-	// Send req using http Client
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -115,7 +110,6 @@ func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {
 	}
 	defer resp.Body.Close()
 
-	// Check error code
 	if resp.StatusCode != http.StatusOK {
 		var errorElrond ErrorElrond
 		body, _ := io.ReadAll(resp.Body)
@@ -123,7 +117,6 @@ func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {
 		return []Transactions{}, errors.New(errorElrond.Message)
 	}
 
-	// Convert JSON into struct
 	var transactions []Transactions
 	err = json.NewDecoder(resp.Body).Decode(&transactions)
 	if err != nil {
@@ -135,7 +128,6 @@ func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {
 }
 
 func writeCSV(governance []Governance) {
-	// export to csv file
 	file, err := os.Create("governance.csv")
 	if err != nil {
 		log.Err(err).Msg("Create file err")

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog/log"
+	"github.com/schollz/progressbar/v3"
 )
 
 const EXPLORER_API = "https://api.elrond.com"
@@ -31,6 +32,14 @@ func main() {
 		governance    []Governance
 	)
 
+	// Get total transactions count and init progress bar
+	count, err := GetTransactionsCount(smartContract)
+	if err != nil {
+		log.Err(err).Msg("GetTransactionsCount err")
+		panic(err)
+	}
+	bar := progressbar.Default(int64(count))
+
 	for {
 		txs, err := GetTransactionsAccounts(smartContract, strconv.Itoa(page))
 		if err != nil {
@@ -46,19 +55,19 @@ func main() {
 					proposal: getProposal(base64),
 					power:    getPower(base64),
 				})
-			} else {
-				fmt.Println(base64)
 			}
 		}
 		page = page + len(txs)
+		// increment progress bar
+		fmt.Println(page)
+		_ = bar.Add(len(txs))
+		// check if all transactions are processed
 		if len(txs) != 50 {
 			break
 		}
 	}
 
 	writeCSV(governance)
-
-	fmt.Println("Done")
 }
 
 func decodeBase64String(base64String string) string {
@@ -89,6 +98,42 @@ func getPower(decoded string) string {
 	split := strings.Split(decoded, "@")
 	power, _ := strconv.ParseInt(split[3], 16, 64)
 	return strconv.FormatInt(power, 10)
+}
+
+func GetTransactionsCount(erd string) (int, error) {
+	var (
+		url = EXPLORER_API + "/accounts/" + erd + "/transactions/count"
+	)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Err(err).Msg("Error when client create GET request to " + url)
+		return 0, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Err(err).Msg("Error when client do request to " + url)
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errorElrond ErrorElrond
+		body, _ := io.ReadAll(resp.Body)
+		_ = json.Unmarshal(body, &errorElrond)
+		return 0, errors.New(errorElrond.Message)
+	}
+
+	var count int
+	err = json.NewDecoder(resp.Body).Decode(&count)
+	if err != nil {
+		log.Err(err).Msg("Error when Decode JSON")
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {

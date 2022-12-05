@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -59,7 +58,6 @@ func main() {
 		}
 		page = page + len(txs)
 		// increment progress bar
-		fmt.Println(page)
 		_ = bar.Add(len(txs))
 		// check if all transactions are processed
 		if len(txs) != 50 {

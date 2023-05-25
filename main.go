@@ -15,7 +15,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 )
 
-const EXPLORER_API = "https://api.elrond.com"
+const EXPLORER_API = "https://api.multiversx.com"
 
 type Governance struct {
 	erd      string
@@ -118,10 +118,10 @@ func GetTransactionsCount(erd string) (int, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		var errorElrond ErrorElrond
+		var errorMvx ErrorMultiversX
 		body, _ := io.ReadAll(resp.Body)
-		_ = json.Unmarshal(body, &errorElrond)
-		return 0, errors.New(errorElrond.Message)
+		_ = json.Unmarshal(body, &errorMvx)
+		return 0, errors.New(errorMvx.Message)
 	}
 
 	var count int
@@ -154,10 +154,10 @@ func GetTransactionsAccounts(erd, from string) ([]Transactions, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		var errorElrond ErrorElrond
+		var errorMvx ErrorMultiversX
 		body, _ := io.ReadAll(resp.Body)
-		_ = json.Unmarshal(body, &errorElrond)
-		return []Transactions{}, errors.New(errorElrond.Message)
+		_ = json.Unmarshal(body, &errorMvx)
+		return []Transactions{}, errors.New(errorMvx.Message)
 	}
 
 	var transactions []Transactions
